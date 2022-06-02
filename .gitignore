@@ -135,3 +135,7 @@ dmypy.json
 *.shp
 *.xml
 *.shx 
+
+# CSV
+*.csv
+*.html

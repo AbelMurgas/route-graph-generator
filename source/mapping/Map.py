@@ -16,7 +16,9 @@ class Map:
             else if want to graph all the route use the same name of the route name\n. Defaults to "route_code" (graph only the route).
             graph_type (str, optional): Only have 3 type of graph 'lineal' , 'marker' or 'cirle' graph. Defaults to "lineal".\n
             latitude_name (str, optional): _description_. Defaults to "latitude".\n
-            longitude_name (str, optional): _description_. Defaults to "longitude".
+            longitude_name (str, optional): _description_. Defaults to "longitude".\n
+            sequence_name (str,optiona): if the route have a sequence change in circle and marker graph de name in the group whit the coords,
+            and add the sequence to improve the visualization of the mark or the circle. Defaults to "".
         """
         self.data = data
         self.map = folium.Map()
@@ -34,16 +36,16 @@ class Map:
                        'pink', 'lightblue', 'lightgreen', 'gray',
                        'black', 'lightgray']
         if self.__check_data():
-            self.add_data_to_map(self.data)
+            self.add_data_to_map()
 
     def __check_data(self) -> bool:
         data_pass = True
-        for i in [self.group_name,self.latitude_name,self.longitude_name]:
+        for i in [self.group_name,self.latitude_name,self.longitude_name, self.route_name]:
             if not i in self.data:
-                print(f"ERROR: Dataframe not have {i} column name") 
-                data_pass = False
-        if not self.graph_type == 'lineal' or not self.graph_type == 'marker' or not self.graph_type == 'circle':
-            print(f"ERROR: The graph type only permits 'linear' type or 'point' type, the input received is: {self.graph_type}") 
+                print(f"ERROR: Dataframe not have '{i}' column name") 
+                data_pass = False 
+        if not self.graph_type == 'lineal' and not self.graph_type == 'marker' and not self.graph_type == 'circle':
+            print(f"ERROR: The graph type only permits 'linear' , 'marker', 'circle' type, the input received is: {self.graph_type}") 
             data_pass = False
         return data_pass 
 
@@ -53,9 +55,10 @@ class Map:
         if not self.route_name == self.group_name:
             self.data[self.group_name] = self.data[self.route_name] + "-" + self.data[self.group_name]
         self.data['sequence_group'] = pd.Series(
-            pd.factorize(self.data.group_name)[0])
+            pd.factorize(self.data[self.group_name])[0])
         self.data['sequence_group'] = self.data['sequence_group'].ffill()+1
         self.data['color'] = self.data['sequence_group'].apply(lambda x: self.__assign_color(x))
+        self.data['sequence_internal_group']= self.data.groupby(self.group_name).cumcount() + 1
         
     def __assign_color(self,number):
         cant_color = len(self.colors)
@@ -63,6 +66,7 @@ class Map:
         return self.colors[int(number)]
             
     def add_data_to_map(self):
+        self.__prepare_data()
         if self.graph_type == "lineal":
             self.__generate_lineal_graph()
         elif self.graph_type == "marker":
@@ -95,29 +99,27 @@ class Map:
             f.add_to(self.map)
 
     def __generate_marker_graph(self):
-        for i in self.data[self.group_name].unique():
-            f = folium.FeatureGroup(i)
-            df_viaje = self.data.loc[self.data.loc[:, self.group_name] == i]
-            coords = df_viaje['coords'].tolist()
-            v_popup = df_viaje['coords'].unique()
-            v_color = df_viaje['color'].unique()
+        for index, information in self.data.iterrows():
+            name = information[self.group_name] + "-" + str(information['sequence_internal_group'])
+            f = folium.FeatureGroup(name)
+            coords = np.array(information['coords']).tolist()
+            color = information['color']
             folium.Marker(coords,
-                          popup=v_popup,
-                          icon=folium.Icon(color=v_color, icon_color=v_color)).add_to(f)
+                          popup=name,
+                          icon=folium.Icon(color=color, icon_color=color)).add_to(f)
             f.add_to(self.map)
 
-    def __generate_circle_graph(self, data, name = 'coords'):
-        for i in self.data[self.group_name].unique():
-            f = folium.FeatureGroup(i)
-            df_viaje = self.data.loc[self.data.loc[:, self.group_name] == i]
-            coords = df_viaje['coords'].tolist()
-            v_popup = df_viaje['coords'].unique()
-            v_color = df_viaje['color'].unique()
+    def __generate_circle_graph(self):
+        for index, information in self.data.iterrows():
+            name = information[self.group_name] + "-" + str(information['sequence_internal_group'])
+            f = folium.FeatureGroup(name)
+            coords = np.array(information['coords']).tolist()
+            color = information['color']
             folium.CircleMarker(coords,
-                                popup=v_popup,
-                                color='black',
-                                fill_color='black',
-                                radius=10).add_to(f)
+                                popup=name,
+                                color=color,
+                                fill_color=color,
+                                radius=5).add_to(f)
             f.add_to(self.map)
 
     def create_map(self, name="map"):
