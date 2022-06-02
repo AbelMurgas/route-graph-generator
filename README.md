@@ -3,7 +3,7 @@ This project is about create a program that generate a chart of routes
 
 ## Usage
 
-The read .shp option:
+The read .shp option
 conditions:
 - must have all .shp file and other important file (.prj,.cpg,.dbf,.xml,.shx) in shp path
 
