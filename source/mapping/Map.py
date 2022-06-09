@@ -50,6 +50,8 @@ class Map:
         return data_pass 
 
     def __prepare_data(self):
+        self.data = self.data.ffill()
+        self.data.reset_index(drop=True, inplace=True)
         self.data['coords'] = self.data[['latitude', 'longitude']] \
             .apply(tuple, axis=1)
         if not self.route_name == self.group_name:
