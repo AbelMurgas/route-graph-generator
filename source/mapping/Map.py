@@ -3,7 +3,8 @@ from folium import plugins
 from branca.element import Figure
 import pandas as pd
 import numpy as np
-
+import os
+import webbrowser
 
 class Map:
     def __init__(self, data: pd.DataFrame, route_name = "route_code",group_name = "route_code", graph_type = "lineal", latitude_name = "latitude", longitude_name = "longitude"):
@@ -125,4 +126,6 @@ class Map:
             f.add_to(self.map)
 
     def create_map(self, name="map"):
+        os.chdir('./output/map/')
         self.map.save(f"{name}.html")
+        webbrowser.open_new_tab(name + ".html")
