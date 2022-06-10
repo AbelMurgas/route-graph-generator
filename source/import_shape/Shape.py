@@ -32,7 +32,7 @@ class Shape:
         Returns:
             pd.DataFrame: data frame with the shape list
         """
-        shp_files = glob.glob('../input/shp/' + '*.shp') 
+        shp_files = glob.glob('./input/shp/' + '*.shp') 
         if len(shp_files):
             df_shp_files = pd.DataFrame(shp_files, columns=['shape_files'])
             df_shp_files['route'] = df_shp_files['shape_files'] \
